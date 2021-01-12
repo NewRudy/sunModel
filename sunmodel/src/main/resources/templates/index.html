@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!--bootstrap-->
+
+    <link rel="stylesheet" href="/css/element-ui.css">
+    <link rel="stylesheet" href="/libs/jqueryui/jquery-ui.css">
+    <!--cesium小部件-->
+    <link rel="stylesheet" href="/libs/Cesium-1.64/Build/Cesium/Widgets/widgets.css">
+    <!--沙盒-->
+    <link rel="stylesheet" href="/libs/Cesium-1.64/Apps/Sandcastle/templates/bucket.css">
+    <!-- 标绘相关 -->
+    <link rel="stylesheet" type="text/css" href="/libs/prompt/movePrompt.css">
+    <!--element-->
+    <!--自定义样式-->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="shortcut icon" href="#"/>
+    <title>sunModel</title>
+</head>
+
+<body>
+<div id="cesiumContainer">
+    <div id="app">
+        <div>
+            <el-menu id='nav' mode="horizontal" background-color="#080a0e">
+                <el-menu-item>
+                    <el-image style="width: 140px" src="/data/logo.png" key="contain">
+                        <div slot="placeholder" class="image-slot">
+                            加载中<span class="dot">...</span>
+                        </div>
+                    </el-image>
+                </el-menu-item>
+                <el-menu-item index="1">Home</el-menu-item>
+                <el-submenu index="2">
+                    <template slot="title">Layer</template>
+                    <el-menu-item index="2-1" onclick="addWeatherStations()">weatherStations</el-menu-item>
+                    <el-menu-item index="2-3" @click="showSelectArea">selectArea</el-menu-item>
+                </el-submenu>
+                <el-submenu index="3">
+                    <template slot="title">View</template>
+                    <el-menu-item index="3-1" @click="viewPosition">position</el-menu-item>
+                    <el-menu-item index="3-2" @click="viewShadow">shadow</el-menu-item>
+                    <el-menu-item index="3-3" @click="viewNavigation">navigation</el-menu-item>
+                    <el-menu-item index="3-4" @click="viewScale">scale</el-menu-item>
+                    <el-menu-item index="3-5" @click="viewToolbar">toolbar</el-menu-item>
+                    <el-menu-item index="3-6" @click="viewTimeLine">timeLine</el-menu-item>
+                    <el-menu-item index="3-6" onclick="viewTerrain()">terrain</el-menu-item>
+                </el-submenu>
+                <el-submenu index="4">
+                    <template slot="title">Draw</template>
+                    <el-menu-item index="4-1" onclick="drawPoint()">point</el-menu-item>
+                    <el-menu-item index="4-2" onclick="drawPolyline()">polyline</el-menu-item>
+                    <el-menu-item index="4-3" onclick="drawRectangle()">rectangle</el-menu-item>
+                    <el-menu-item index="4-4" onclick="drawPolygon()">polygon</el-menu-item>
+                    <el-menu-item index="4-5" onclick="drawCircle()">circle</el-menu-item>
+                    <el-menu-item index="4-6" onclick="clearAll()">clear</el-menu-item>
+                </el-submenu>
+                <el-menu-item index="model" @click="viewModel">Model</el-menu-item>
+                <!--                <el-submenu index="5">-->
+                <!--                    <template slot="title">Model</template>-->
+                <!--                    <el-menu-item index="5-1">single point model access</el-menu-item>-->
+                <!--                    <el-menu-item index="5-2">single point model access</el-menu-item>-->
+                <!--                    <el-menu-item index="5-3">global model</el-menu-item>-->
+                <!--                </el-submenu>-->
+                <el-menu-item index="6">Document</el-menu-item>
+                <el-menu-item index="7">Contact us</el-menu-item>
+            </el-menu>
+        </div>
+        <div id="selectArea" style="z-index: 100;margin-top: 80px;position: absolute;visibility: hidden">
+            <el-select
+                    v-model="country"
+                    @change="choseCountry"
+                    placeholder="China">
+                <el-option
+                        v-for="item in country"
+                        :key="item.id"
+                        :label="item.value"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+            <el-select
+                    v-model="provinceNow"
+                    @change="choseProvince"
+                    placeholder="province">
+                <el-option
+                        v-for="item in province"
+                        :key="item.id"
+                        :label="item.value"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+            <el-select
+                    v-model="cityNow"
+                    @change="choseCity"
+                    placeholder="city">
+                <el-option
+                        v-for="item in cityTemp"
+                        :key="item.id"
+                        :label="item.value"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+            <el-select
+                    v-model="areaNow"
+                    @change="choseBlock"
+                    placeholder="area">
+                <el-option
+                        v-for="item in areaTemp"
+                        :key="item.id"
+                        :label="item.value"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+            <el-button @click="addSelectedArea">add</el-button>
+            <!--            <el-avatar shape="square" fit="contain" src="/data/close.png" @click="closeLayer" style="position: fixed"></el-avatar>-->
+        </div>
+        <el-card id="modelCard" class="card" style="visibility: hidden;z-index: 100;position: absolute;margin-top: 10%;margin-left: 70%;">
+            <el-main
+                    style="display:inline-block; height: 500px;border: solid 1px;border-radius: 5px;margin-left: 10px;">
+                <el-input
+                        v-model="modelName"
+                        placeholder="search by name"
+                        prefix-icon="el-icon-search"
+                        style="width: 60%">
+                </el-input>
+                <el-button style="width: 30%;margin-left: 10px" type="primary" icon="el-icon-search"
+                           @click="searchModel">Search
+                </el-button>
+                <el-table
+                        :data="modelItems.slice((currentPage-1)*5,currentPage*5)"
+                        style="width: 100%">
+                    <el-table-column style="width: 70%"
+                            prop="name"
+                            label="Name">
+                    </el-table-column>
+                    <el-table-column
+                            prop="author"
+                            label="Author">
+                    </el-table-column>
+                    <el-table-column
+                            label="Operation">
+                        <template slot-scope="scope">
+                            <el-button type="primary" @click="visitModel" :disabled="false">visit
+                            </el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <el-pagination
+                        :current-page="currentPage"
+                        @current-change="handleCurrentChange"
+                        :hide-on-single-page=true
+                        :page-size="5"
+                        :total="modelItems.length"
+                        layout="total, prev, pager, next, jumper">
+                </el-pagination>
+            </el-main>
+        </el-card>
+        <!--        <el-card id='view' class="box-card">-->
+        <!--            <div slot="header" class="clearfix">-->
+        <!--                <span style="font-size: medium;position: fixed">View</span>-->
+        <!--                <el-avatar shape="square" :size="30" fit="contain" src="/data/close.png" @click="closeView" style="position: fixed"></el-avatar>-->
+        <!--            </div>-->
+        <!--            <div class="text item">-->
+        <!--                <el-button onclick="viewPosition()">position</el-button>-->
+        <!--                <el-button onclick="viewShadow()">shadow</el-button>-->
+        <!--            </div>-->
+        <!--            <div class="text item">-->
+        <!--                <el-button onclick="viewNavigation()">navigation</el-button>-->
+        <!--                <el-button onclick="viewScale()">scale</el-button>-->
+        <!--            </div>-->
+        <!--            <div class="text item">-->
+        <!--                <el-button onclick="viewToolbar()">toolbar</el-button>-->
+        <!--                <el-button onclick="viewTimeLine()">timeLine</el-button>-->
+        <!--            </div>-->
+        <!--        </el-card>-->
+        <!--        <el-card id='draw' class="box-card">-->
+        <!--            <div slot="header" class="clearfix">-->
+        <!--                <span style="font-size: medium;position: fixed">Draw</span>-->
+        <!--                <el-avatar shape="square" :size="30" fit="contain" src="/data/close.png" @click="closeDraw" style="margin-left:80%;position: fixed"></el-avatar>-->
+        <!--            </div>-->
+        <!--            <div class="text item">-->
+        <!--                <el-tooltip class="item" effect="dark" content="Point" placement="bottom-start">-->
+        <!--                    <el-avatar shape="square" :size="20" fit="fit" src="/data/logo.png" onclick="drawPoint()"></el-avatar>-->
+        <!--                </el-tooltip>-->
+        <!--                <el-tooltip class="item" effect="dark" content="Polyline" placement="bottom-start">-->
+        <!--                    <el-avatar shape="square" :size="20" fit="fit" src="/data/logo.png" onclick="drawPolyline()"></el-avatar>-->
+        <!--                </el-tooltip>-->
+        <!--                <el-tooltip class="item" effect="dark" content="Rectangle" placement="bottom-start">-->
+        <!--                    <el-avatar shape="square" :size="20" fit="fit" src="/data/logo.png" onclick="drawRectangle()"></el-avatar>-->
+        <!--                </el-tooltip>-->
+        <!--                <el-tooltip class="item" effect="dark" content="Polygon" placement="bottom-start">-->
+        <!--                    <el-avatar shape="square" :size="20" fit="fit" src="/data/logo.png" onclick="drawPolygon()"></el-avatar>-->
+        <!--                </el-tooltip>-->
+        <!--                <el-tooltip class="item" effect="dark" content="Circle" placement="bottom-start">-->
+        <!--                    <el-avatar shape="square" :size="20" fit="fit" src="/data/logo.png" onclick="drawCircle()"></el-avatar>-->
+        <!--                </el-tooltip>-->
+        <!--                <el-tooltip class="item" effect="dark" content="Text" placement="bottom-start">-->
+        <!--                    <el-avatar shape="square" :size="20" fit="fit" src="/data/logo.png" onclick="drawText()"></el-avatar>-->
+        <!--                </el-tooltip>-->
+        <!--            </div>-->
+        <!--            <div>-->
+        <!--                <el-button>Undo</el-button>-->
+        <!--                <el-button>Redo</el-button>-->
+        <!--                <el-button onclick="clearAll()">Clear</el-button>-->
+        <!--            </div>-->
+        <!--        </el-card>-->
+    </div>
+    <div id="mousePosition"></div>
+</div>
+
+<!-- Optional JavaScript -->
+<!--前端常用插件-->
+<script type="text/javascript" src="/libs/vue.js"></script>
+<script type="text/javascript" src="/libs/element-ui.js"></script>
+<script type="text/javascript" src="/libs/axios.js"></script>
+<script type="text/javascript" src="/libs/jquery/jquery.js"></script>
+<script type="text/javascript" src="/libs/echarts.min.js"></script>
+<!--cesium插件-->
+<script type="text/javascript" src="/libs/Cesium-1.64/Build/Cesium/Cesium.js"></script>
+<script type="text/javascript" src="/libs/CesiumExtend/viewerCesiumNavigationMixin.min.js"></script>
+<script type="text/javascript" src="/libs/CesiumExtend/CesiumHeatmap.js"></script>
+<script type="text/javascript" src="/libs/Cesium-1.64/Apps/Sandcastle/Sandcastle-header.js"></script>
+<!-- 弹窗 -->
+<script type="text/javascript" src="/libs/prompt/movePrompt.js"></script>
+<!-- 图层编辑文件 -->
+<script type="text/javascript" src="/libs/drawPlot/createPolyline.js"></script>
+<script type="text/javascript" src="/libs/drawPlot/createPolygon.js"></script>
+<script type="text/javascript" src="/libs/drawPlot/createBillboard.js"></script>
+<script type="text/javascript" src="/libs/drawPlot/createRectangle.js"></script>
+<script type="text/javascript" src="/libs/drawPlot/createCircle.js"></script>
+<script type="text/javascript" src="/libs/drawPlot/drawTool.js"></script>
+<!-- 克里金插值 -->
+<script type="text/javascript" src="/libs/kriging.min.js"></script>
+<!-- 功能文件 -->
+<script type="text/javascript" src="/js/function.js"></script>
+<script type="text/javascript" src="/js/initCesium.js"></script>
+<script type="text/javascript" src="/js/layer.js"></script>
+<script type="text/javascript" src="/js/draw.js"></script>
+<script type="text/javascript" src="/js/layout.js"></script>
+
+</body>
+
+</html>

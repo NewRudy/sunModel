@@ -1,0 +1,94 @@
+/*地图容器*/
+#cesiumContainer {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #000000;
+    position: absolute;
+    z-index: 0;
+}
+
+#creditContainer {
+    display: none;
+}
+
+.cesium-infoBox-visible {
+    transform: translate(0,0);
+    visibility: visible;
+    opacity: 1;
+    transition: opacity .2s ease-out,transform .2s ease-out;
+}
+.cesium-infoBox {
+    display: none;
+}
+.cesium-viewer-toolbar,
+/* 工具条 */
+.cesium-viewer-animationContainer,
+/* 左下角动画控件 */
+.cesium-viewer-timelineContainer,
+/* 时间线 */
+.cesium-viewer-bottom,
+/* logo信息 */
+.cesium-viewer-vrContainer,
+/*VR工具条*/
+.cesium-viewer-fullscreenContainer,
+/* 全屏按钮 */
+.navigation-controls,
+.compass,
+.distance-legend {
+    z-index: 999;
+    visibility: hidden;
+}
+.cesium-viewer-timelineContainer {
+    width: 83%;
+}
+/* 菜单栏 */
+.el-menu {
+    margin: 0;
+}
+.el-menu-item, .el-submenu__title {
+    font-size: large;
+}
+#nav {
+    height: 5%;
+    z-index: 100;
+    position: absolute;
+    background-color: gray;
+}
+/* 显示设置 绘制设置 */
+#view, #draw {
+    z-index: 100;
+    width: 20%;
+    height: 30%;
+    margin:15% 75%;
+    position: absolute;
+    background-color: gray;
+    visibility: hidden;
+}
+#view .el-button {
+    background-color: gray;
+}
+#draw .el-button {
+    background-color: gray;
+}
+/* 绘制框 */
+#draw .el-card_body .item {
+    margin-left: 5%;
+}
+/*#allNav div {*/
+/*    display: none;*/
+/*}*/
+/*鼠标框*/
+#mousePosition {
+    visibility: hidden;
+    font-size: 18px;
+    display: block;
+    position: absolute;
+    bottom: 0%;
+    right: 8%;
+    color: gray;
+    z-index: 999;
+    margin-bottom: 25px;
+}
