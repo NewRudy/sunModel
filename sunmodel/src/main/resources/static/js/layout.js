@@ -19,7 +19,7 @@ new Vue({
             modelItems:'',
             currentPage:1,
 
-            nowCode:'100000',
+            nowCode:'',
             bound:'',
             radiationStations:'',
 
@@ -180,10 +180,9 @@ new Vue({
         addAllStations(){
 
         },
-        // 加载选择的区域
-        addSelectedArea () {
+        async getNowCode(){
+            let _this = this
             let area = ''
-            let id = ''
             if (this.areaNow != 'area'){
                 area = this.areaNow
             } else if (this.cityNow != 'city') {
@@ -194,67 +193,57 @@ new Vue({
                 alert('no selected area')
                 return
             }
-            let that = this
-            async function addAreaAndSta () {
-                try {
-                    if (that.cityNow === 'city'){       // 省份要特殊处理
-                        await axios.get('/chinacode/' + area).then(function (res) {
-                            if(res.status === 200) {
-                                id = res.data
-                            }
-                        }).catch(function (err) {console.log(typeof + err)})
-                    } else {
-                        id = area
+            if (this.cityNow === 'city'){       // 省份要特殊处理
+                await axios.get('/chinacode/' + area).then(function (res) {
+                    if(res.status === 200) {
+                        _this.nowCode = res.data
                     }
-                    that.nowCode = id
-                    if (id != '') {
-                        let path = 'https://geo.datav.aliyun.com/areas_v2/bound/'   // 使用在线的中国行政区数据
-                        path  = path + id + '.json'
-                        await axios.get(path).then(function (res) {
-                            if(res.status === 200) {
-                                that.addGeoJson(res.data,{
-                                    stroke: Cesium.Color.HOTPINK,
-                                    fill: Cesium.Color.PINK,
-                                    strokeWidth: 3,
-                                    name:id + 'district',
-                                    clampToGround: true
-                                },true)
-                            }
-                        }).catch(function (error) {console.log(typeof + error)})
-                    }
-
-                    if (id != '') {     // 加载气象站点
-                        axios.get('/chinaStation/location/' + id).then(function (res) {
-                            if (res.status === 200) {
-                                that.addGeoJson(res.data, {
-                                    name: id + 'weatherStation',
-                                    markerColor:Cesium.Color.ROYALBLUE,
-                                    // markerSymbol:'weatherStation',
-                                    markerSize:24,
-                                    clampToGround: true
-                                },false)
-                            }
-                        }).catch(function (err) {console.log(typeof + err)})
-                    }
-
-                    if (id != '') {     // 加载太阳辐射站点
-                        axios.get('/sunRadiation/location/' + id).then(function (res) {
-                            if (res.status === 200) {
-                                console.log(res.data)
-                                that.addGeoJson(res.data, {
-                                    name: id + 'sunStation',
-                                    markerColor:Cesium.Color.BROWN,
-                                    // markerSymbol: 'sunStation',
-                                    markerSize:24,
-                                    clampToGround: true
-                                },false)
-                            }
-                        }).catch(function (err) {console.log(typeof + err)})
-                    }
-                } catch (err) {console.log(err)
-                }
+                }).catch(function (err) {console.log(typeof + err)})
+            } else {
+                this.nowCode = area
             }
-            addAreaAndSta()
+        },
+        // 加载选择的区域
+        async addSelectedArea () {
+            let _this = this
+            await this.getNowCode()
+            let path = 'https://geo.datav.aliyun.com/areas_v2/bound/'   // 使用在线的中国行政区数据
+            path  = path + this.nowCode + '.json'
+            await axios.get(path).then(function (res) {
+                if(res.status === 200) {
+                    _this.addGeoJson(res.data,{
+                        stroke: Cesium.Color.HOTPINK,
+                        fill: Cesium.Color.PINK,
+                        strokeWidth: 3,
+                        name:_this.nowCode + 'district',
+                        clampToGround: true
+                    },true)
+                }
+            }).catch(function (error) {console.log(typeof + error)})
+
+            await axios.get('/chinaStation/location/' + this.nowCode).then(function (res) {
+                if (res.status === 200) {
+                    _this.addGeoJson(res.data, {
+                        name: _this.nowCode + 'weatherStation',
+                        markerColor:Cesium.Color.ROYALBLUE,
+                        // markerSymbol:'weatherStation',
+                        markerSize:24,
+                        clampToGround: true
+                    },false)
+                }
+            }).catch(function (err) {console.log(typeof + err)})
+
+            await axios.get('/sunRadiation/location/' + this.nowCode).then(function (res) {
+                if (res.status === 200) {
+                    _this.addGeoJson(res.data, {
+                        name: _this.nowCode + 'sunStation',
+                        markerColor:Cesium.Color.BROWN,
+                        // markerSymbol: 'sunStation',
+                        markerSize:24,
+                        clampToGround: true
+                    },false)
+                }
+            }).catch(function (err) {console.log(typeof + err)})
         },
         /*
          * 选取模型组件
@@ -309,6 +298,8 @@ new Vue({
         },
         async loadKriging(date){
             let _this = this
+            await this.getNowCode()
+
             await axios.get('/ssd/location/' + this.nowCode).then((res)=>{
                 if(res.status === 200){
                     _this.radiationStations = res.data
@@ -319,6 +310,7 @@ new Vue({
                     _this.bound = res.data
                 }
             })
+
             let canvas = document.getElementById("canvasMap")
             canvas.width = 2000
             canvas.height = 2000
@@ -331,6 +323,10 @@ new Vue({
                 y.push(this.radiationStations[i].coordinates['1'])
             }
 
+            if(!t || !x || !y){
+                alert('no data')
+                return
+            }
 
             let variogram = kriging.train(t, x, y, "exponential", 0, 100);
 
@@ -342,16 +338,17 @@ new Vue({
             kriging.plot(canvas, grid, [73.4766, 135.088], [18.1055, 53.5693], colors);
             viewer.dataSources.removeAll()
             let layer = viewer.imageryLayers.addImageryProvider(new Cesium.SingleTileImageryProvider({
-                 url: this.returnImgae(),
-                 rectangle: new Cesium.Rectangle(
-                     Cesium.Math.toRadians(73.4766),
-                     Cesium.Math.toRadians(18.1055),
-                     Cesium.Math.toRadians(135.088),
-                     Cesium.Math.toRadians(53.5693)
-                 )
-             }));
-             layer.alpha = 0.4
-             viewer.imageryLayers
+                url: this.returnImgae(),
+                rectangle: new Cesium.Rectangle(
+                    Cesium.Math.toRadians(73.4766),
+                    Cesium.Math.toRadians(18.1055),
+                    Cesium.Math.toRadians(135.088),
+                    Cesium.Math.toRadians(53.5693)
+                )
+            }));
+            layer.alpha = 0.4
+            viewer.zoomTo(layer)
+            // viewer.imageryLayers
         },
     },
     mounted(){
