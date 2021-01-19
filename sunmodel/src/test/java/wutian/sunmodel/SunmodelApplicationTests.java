@@ -163,4 +163,6 @@ class MongodbApplicationTests {
     public void testSSD() {
         chinaSSD1017Controller.getByLocation(String.valueOf(320000));
     }
+
+
 }

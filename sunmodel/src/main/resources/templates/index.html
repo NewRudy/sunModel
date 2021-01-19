@@ -25,6 +25,7 @@
 <body>
 <div id="cesiumContainer">
     <div id="app">
+        <canvas id="canvasMap" style="display: none"></canvas>
         <div>
             <el-menu id='nav' mode="horizontal" background-color="#080a0e">
                 <el-menu-item>
@@ -37,7 +38,7 @@
                 <el-menu-item index="1">Home</el-menu-item>
                 <el-submenu index="2">
                     <template slot="title">Layer</template>
-                    <el-menu-item index="2-1" onclick="addWeatherStations()">weatherStations</el-menu-item>
+                    <el-menu-item index="2-1" @click="addAllStations">allStations</el-menu-item>
                     <el-menu-item index="2-3" @click="showSelectArea">selectArea</el-menu-item>
                 </el-submenu>
                 <el-submenu index="3">
@@ -116,6 +117,8 @@
                 </el-option>
             </el-select>
             <el-button @click="addSelectedArea">add</el-button>
+            <el-button @click="loadKriging('2017-1-1')">kriging</el-button>
+
             <!--            <el-avatar shape="square" fit="contain" src="/data/close.png" @click="closeLayer" style="position: fixed"></el-avatar>-->
         </div>
         <el-card id="modelCard" class="card" style="visibility: hidden;z-index: 100;position: absolute;margin-top: 10%;margin-left: 70%;">

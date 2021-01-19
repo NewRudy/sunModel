@@ -2,17 +2,19 @@ package wutian.sunmodel.dao;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.geo.GeoJsonPolygon;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 import wutian.sunmodel.entity.ChinaSSD1017;
 
 import java.util.List;
 
 @Repository
-public class ChinaSSD1017Dao {
+public class ChinaSSD1017Dao{
     @Autowired
     MongoTemplate mongoTemplate;
     public List<ChinaSSD1017> findAll(String collectionName) {
@@ -30,4 +32,13 @@ public class ChinaSSD1017Dao {
         query.addCriteria(Criteria.where("coordinates").within(geoJsonPolygon));
         return mongoTemplate.find(query,ChinaSSD1017.class,collectionName);
     }
+
+    public List<ChinaSSD1017> findInPolygonAndDateIs(String collectionName, GeoJsonPolygon geoJsonPolygon, String date) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("coordinates").within(geoJsonPolygon));
+        query.addCriteria(Criteria.where("date").is(date));
+        return mongoTemplate.find(query,ChinaSSD1017.class,collectionName);
+    }
+
+
 }

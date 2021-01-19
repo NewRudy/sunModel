@@ -3,10 +3,12 @@ package wutian.sunmodel.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.geo.Point;
 import org.springframework.data.mongodb.core.geo.GeoJsonPolygon;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import wutian.sunmodel.dao.ChinaSSD1017Dao;
@@ -25,7 +27,7 @@ public class ChinaSSD1017Controller {
 
     @RequestMapping(value = "/code/{code}")
     public String getByCode(@PathVariable("code") String code){
-        List<ChinaSSD1017> list = chinaSSD1017Dao.findByCode("test",code);
+        List<ChinaSSD1017> list = chinaSSD1017Dao.findByCode("test", code);
         return JSON.toJSONString(list);
     }
 
@@ -50,7 +52,10 @@ public class ChinaSSD1017Controller {
             }
         }
         GeoJsonPolygon geoJsonPolygon = new GeoJsonPolygon(points);
-        List<ChinaSSD1017> list = chinaSSD1017Dao.findInPolygon("test",geoJsonPolygon);
+        List<ChinaSSD1017> list = chinaSSD1017Dao.findInPolygonAndDateIs("test", geoJsonPolygon, "2017-1");
+
         return JSON.toJSONString(list);
     }
+
+
 }
